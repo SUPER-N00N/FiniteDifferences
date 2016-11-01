@@ -42,7 +42,7 @@ enum class AccessScheme: bool
     Index,
 };
 
-
+template< bool _cond, class _then, class _else >
 struct IF
 {
         typedef _then RET;
@@ -100,6 +100,16 @@ struct inroot
 enum : uint64_t { eval = (_do< true, 0, 1, 1>::x)};
 };
 
+template <int64_t N > struct wilsons_primality_test 
+{
+enum : bool { eval = (ifact< N - 1>::eval % N - N == -1) };
+};
+
+template <int64_t N > struct fermats_little_primality_test 
+{
+enum : bool { eval = (ipow< 2, N - 1 >::eval % N == 1) };
+};
+
 
 template< typename _T, int _I >
 struct simd_sum
@@ -116,6 +126,14 @@ struct simd_sum< _T, 0 >
         static inline _T eval(_T &a)
         {
                 return a[0];
+        }
+};
+template< typename _T, int _I >
+struct simd_cp
+{
+        static inline void eval(_T &d, _T &s)
+        {
+                d[_I] = s[_I]; simd_cp< _T, _I - 1 >::eval(d, s);
         }
 };
 template< typename _T >
