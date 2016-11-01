@@ -62,6 +62,8 @@ struct nchoosek{
         eval = ifact< N >::eval / ( ifact< K >::eval *  ifact< N - K >::eval)
     };
 };
+
+//todo generalize from uint64_t
 template< uint64_t N, uint64_t M >
 struct ipow
 {
@@ -72,6 +74,30 @@ template < uint64_t N >
 struct ipow< N, 0 >
 {
         enum : uint64_t { eval = 1 };
+};
+
+template< uint64_t N >
+struct ild
+{
+enum : uint64_t { eval = 1 + ild< N/2 >::eval};
+
+};
+template < >
+struct ild< 2 >{ enum : uint64_t { eval = 1 }; };
+
+template< int64_t _X, int64_t _N >
+struct inroot
+{
+    template< bool _c, int64_t _d, int64_t _x, int64_t _e >
+        struct _do { enum : int64_t {  N = _N, X = _X,
+                                       d = (N - 1) * _x + ((X / ( ipow< _x, N - 1>::eval))) / N, x = _x + d,
+                                       eval = _do< (x > _x), d, x, _e >::eval};};
+    template< int64_t _d, int64_t _x, int64_t _e >
+        struct _do< false, _d, _x, _e >
+        {
+                enum : int64_t { d = _d, x = _x, eval = _x };
+        };
+enum : uint64_t { eval = (_do< true, 0, 1, 1>::x)};
 };
 
 
@@ -100,6 +126,25 @@ struct simd_cp< _T, 0 >
                 return d[0] = s[0];
         }
 };
+
+template < int K, int D, class S>
+struct ExteriorPower;
+template < int D, class S >
+struct ExteriorAlgebra;
+template< int N > struct Algebra {};
+template< int N > struct GradedAlgebra {};
+template< int K, int N > struct QuotientSpace {};
+
+template< int _Dim >
+struct Set { enum { d = _Dim }; };
+template< int _Dim >
+struct TopologicalSpace: Set< _Dim > {};
+template< int _Dim >
+struct UniformSpace: TopologicalSpace< _Dim > {};
+template< int _Dim, template < int __D > class _M  >
+struct MetricSpace: UniformSpace < _Dim > {};
+
+template< int64_t N > class QuotientRing {};
 
 
 
