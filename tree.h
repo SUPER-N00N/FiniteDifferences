@@ -1,7 +1,7 @@
 /**
  * sn00n@77k.eu-
  */
-// 
+//just a few naive sketches 
 #ifndef TREE_H
 #define TREE_H
 
@@ -61,6 +61,44 @@ struct nchoosek{
     enum { 
         eval = ifact< N >::eval / ( ifact< K >::eval *  ifact< N - K >::eval)
     };
+};
+template< uint64_t N, uint64_t M >
+struct ipow
+{
+        enum : uint64_t { eval = N * ipow< N , M - 1 >::eval};
+};
+
+template < uint64_t N >
+struct ipow< N, 0 >
+{
+        enum : uint64_t { eval = 1 };
+};
+
+
+template< typename _T, int _I >
+struct simd_sum
+{
+        static inline _T eval(_T &a)
+        {
+                return a[_I] + simd_sum< _T, _I - 1 >::eval(a);
+        }
+};
+
+template< typename _T >
+struct simd_sum< _T, 0 >
+{
+        static inline _T eval(_T &a)
+        {
+                return a[0];
+        }
+};
+template< typename _T >
+struct simd_cp< _T, 0 >
+{
+        static inline void eval(_T &d, _T &s)
+        {
+                return d[0] = s[0];
+        }
 };
 
 
