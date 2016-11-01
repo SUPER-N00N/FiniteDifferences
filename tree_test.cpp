@@ -1,3 +1,7 @@
+/**
+ * sn00n@77k.eu
+ */
+
 #include <iostream>
 #include "tree.h"
 

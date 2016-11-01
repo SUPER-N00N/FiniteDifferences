@@ -1,3 +1,6 @@
+/**
+ * sn00n@77k.eu-
+ */
 #ifndef TREE_H
 #define TREE_H
 
