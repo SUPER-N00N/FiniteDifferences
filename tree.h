@@ -221,6 +221,152 @@ struct MetricSpace: UniformSpace < _Dim > {};
 
 template< int64_t N > class QuotientRing {};
 
+template< int _Dim, LinkType _LType, AccessScheme _AScheme,
+    template< class U , class V > class Containment , template< class U >
+    class Allocator, class _Space > class AbstractHalfSimplicialComplex{};
+template< typename _ASD > struct AbstractHalfSimplicialComplexTopologyTrait{};
+template< typename _ASD > struct
+AbstractHalfSimplicialComplexTopologicalOperations{};
+template< typename _Iterator >
+struct AbstractHalfSimplicialComplexIteratorFunctionTrait{};
+template< typename _ASD > struct AbstractHalfSimplicialComplexIterator{};
+template< int _Dim, LinkType _LType, AccessScheme _AScheme,
+    template< class U, class V > class _Containment,
+    template< class U > class _Allocator, class _Space >
+    struct AbstractHalfSimplex: _Space {};
 
+///why d + 1 you may ask. 'cause \f$ {d+1 \choose d} = d+1\f$ , u kno'. 
+//thus we're terminating the recursion at dimension = -1
+
+template< int _Dim,  template< class U, class V > class _Containment,
+    template< class U > class _Allocator,  class _Space >
+    struct AbstractHalfSimplex< _Dim, LinkType::Single, AccessScheme::Index,
+    _Containment, _Allocator, _Space >: _Space
+{
+    enum {d = _Dim};
+    ptrdiff_t upper, opponent,
+              //opponext,
+              next;
+    //ptrdiff_t lower[_Dim + 1]; 
+    ptrdiff_t lower;
+    AbstractHalfSimplex()
+    {
+        upper = -1;
+        opponent = -1;
+        next = -1;
+        lower = -1;
+    };
+    AbstractHalfSimplex(const AbstractHalfSimplex &s): _Space(s)
+    {
+        upper = s.upper;
+        opponent = s.opponent;
+        //opponext = s.opponext;
+        next = s.next;
+        lower = s.lower;
+    }
+};
+
+///terminate the recursion in the empty simplex (simplicial set) with
+//dimension -1
+template< template< class U, class V > class _Containment,
+    template< class U > class _Allocator,
+    class _Space >
+    struct AbstractHalfSimplex< -1, LinkType::Single,
+    AccessScheme::Index, _Containment,
+    _Allocator, _Space >: _Space
+{
+    enum { d = -1, };
+    AbstractHalfSimplex(){};
+    AbstractHalfSimplex(AbstractHalfSimplex &s){};
+};
+
+///why d + 1 you may ask. 'cause \f$ {d+1 \choose d} = d+1\f$ , u kno'. thus
+//we're terminating the recursion at dimension = -1
+template< int _Dim,  template< class U, class V > class _Containment,
+    template< class U > class _Allocator >
+    struct AbstractHalfSimplex< _Dim, LinkType::Single,
+    AccessScheme::Index, _Containment, _Allocator, Set< _Dim > >: Set < _Dim >
+{
+    enum {d = _Dim};
+    ptrdiff_t upper, opponent,
+              //opponext,
+              next;
+    //ptrdiff_t lower[_Dim + 1];
+    ptrdiff_t lower;
+    AbstractHalfSimplex(){};
+    AbstractHalfSimplex(AbstractHalfSimplex &s){};
+};
+///terminate the recursion in the empty simplex (simplicial set) with dimension -1
+template< template< class U, class V > class _Containment,
+    template< class U > class _Allocator >
+struct AbstractHalfSimplex< -1, LinkType::Single, AccessScheme::Index, _Containment,
+    _Allocator, Set< -1 > >: Set< -1 >
+{
+    enum { d = -1, };
+    AbstractHalfSimplex(){};
+    AbstractHalfSimplex(AbstractHalfSimplex &s){};
+};
+
+template< int D, class SC > struct makeHalfSimplex
+{
+    static inline void make(SC &s)
+    {
+
+    }
+
+};
+
+//default filling with complete simplex of dimension D
+template< int D, class _SC > struct ContainerFiller
+{
+    static inline void fill(_SC& s)
+    {
+        /*
+        typedef AbstractHalfSimplex< _D - 1, LinkType::Single, 
+                AccessScheme::Index, _SC::template Containment,
+                _SC::template Allocator,
+                typename _SC::template Space< _D - 1 > > AbstractHalfSimplexT;
+        typedef typename _SC::_Trait::template 
+            HalfSimplexT< _D, AbstractHalfSimplexT > HalfSimplex;
+        typedef typename _SC::template 
+            _Containment< HalfSimplex, 
+            _SC::template _Allocator< HalfSimplex > > Simplices;
+        s.simplex_containers[_D - 1] = new Simplices;
+        */
+        /*typedef AbstractHalfSimplex< _D, LinkType::Single, 
+                AccessScheme::Index, _SC::template Containment,
+                _SC::template Allocator, typename _SC::template Space< _D > > HalfSimplex;*/
+        s.simplex_containers[D] = new typename _SC::template Containment<
+            typename _SC::template HalfSimplex< D >, typename _SC::template Allocator<
+            typename _SC::template HalfSimplex< D > > >;
+        ContainerFiller< D - 1, _SC >::fill(s);
+    };
+};
+
+template< class _SC >
+struct ContainerFiller< -1, _SC >{ static inline void fill(_SC&){}};
+//template< class _SC > 
+//struct ContainerFiller< 0, _SC >{ static inline void fill(_SC&){}};
+
+
+template< int _D, class _IT, class  _SC > struct IterFiller
+{
+    static inline void fill(_IT* i)
+    {
+        typedef  AbstractHalfSimplex< _D, LinkType::Single,
+                 AccessScheme::Index, _SC::template Containment,
+                 _SC::template Allocator,
+                 typename _SC::Space > HalfSimplex;
+        i->iterdata[_D ] = new HalfSimplex;
+        //void* foo = new HalfSimplex;
+        IterFiller< _D - 1, _IT, _SC >::fill(i);
+    }
+};
+
+template< class _IT, class _SC > struct IterFiller< -1, _IT, _SC >{
+    static inline void fill(_IT* i){}
+};
+
+  
 
 #endif
