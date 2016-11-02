@@ -145,6 +145,63 @@ struct simd_cp< _T, 0 >
         }
 };
 
+template< int S > struct SimpleLargerInteger{
+        unsigned long long values[S/64];
+};
+
+template< int S > struct IntegerChooser
+{
+        typedef typename 
+        IF< S <= sizeof(uint8_t), uint8_t,
+                IF< S <= sizeof(uint16_t), uint16_t,
+                IF< S <= sizeof(uint32_t), uint32_t,
+                IF< S <= sizeof(uint64_t), uint64_t,
+                IF< S <= sizeof(uint128_t), uint128_t,
+                IF< S <= sizeof(uint256_t), uint256_t,
+        SimpleLargerInteger< S > > > > > > >::RET IntegerType;
+};
+
+template< > struct IntegerChooser< 3 >
+{
+    enum { size = 3 };
+    typedef uint32_t IntegerType;
+};
+
+template< > struct IntegerChooser< 4 >
+{
+        enum { size = 4};
+        typedef uint32_t IntegerType;
+};
+
+
+template< > struct IntegerChooser< 6 >
+{
+        enum { size = 6};
+    typedef __attribute__ ((aligned (8))) uint64_t IntegerType;
+};
+
+template< > struct IntegerChooser< 8 >
+{
+        enum { size = 8};
+        typedef __attribute__ ((aligned (8))) uint64_t IntegerType;
+};
+
+
+template< > struct IntegerChooser< 16 >
+{
+        enum { size = 16};
+        typedef __attribute__ ((aligned (16))) uint128_t IntegerType;
+};
+
+
+template< > struct IntegerChooser< 32 >
+{
+        enum { size = 32};
+        typedef __attribute__ ((aligned (32))) uint256_t IntegerType;
+};
+
+
+
 template < int K, int D, class S>
 struct ExteriorPower;
 template < int D, class S >
