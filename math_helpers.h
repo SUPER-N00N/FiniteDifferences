@@ -23,7 +23,7 @@ typedef boost::multiprecision::uint256_t uint256_t;
 //typedef __m256 uint256_t;
 typedef boost::multiprecision::uint128_t uint128_t;
 typedef boost::multiprecision::uint256_t uint256_t;
-
+#endif
 enum class ArchType: short
 {
     GENERIC,

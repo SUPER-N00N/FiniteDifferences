@@ -20,7 +20,7 @@
 #include <string>
 #include <boost/lexical_cast.hpp>
 
-#include "tree.h"
+#include "spaces.h"
 
 
 int main(int argc, char* argv[])
