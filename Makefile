@@ -12,7 +12,7 @@ all: le_build tree_test findiffd
 
 tree_test: le_build/tree_test.o
 	$(CPP) -fexceptions -D_BOOL  $^ -I$(INCPATH) -L$(LIBPATH) $(SYSLIBS) -o $@
-le_build/tree_test.o: tree_test.cpp spaces.h algebra.h math_helpers.h simplicial_complex.h
+le_build/tree_test.o: tree_test.cpp spaces.h algebra.h math_helpers.h simplicial_complex.h cw_complex.h
 	$(CPP) -fexceptions -D_BOOL -c $< -I$(INCPATH) -L$(LIBPATH)  -DHAVE_IOMANIP -DHAVE_IOSTREAM -DHAVE_LIMITS_H -o $@
 
 findiffd: le_build/findiffd.o
