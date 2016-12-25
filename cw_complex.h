@@ -133,4 +133,187 @@ template< class _IT, class _CWC > struct IterFiller< -1, _IT, _CWC >{
     static inline void fill(_IT* i){}
 };
 
+template< int _Dim,
+    template< class U , class V > class _Containment,
+    template< class U > class _Allocator,  class _Space>
+    class AbstractOrientedCWComplex< _Dim,
+    LinkType::Single, AccessScheme::Index,
+    _Containment, _Allocator, _Space >
+{
+    public:
+        enum { d = _Dim,};
+        template< class U, class V >
+            using Containment = _Containment< U, V >;
+        template< class U >
+            using Allocator = _Allocator< U >;
+        //template< int D >
+        using Space = _Space;
+        template< int D >
+          using OrientedCWComplex = AbstractOrientedCWComplex< D, LinkType::Single,
+                 AccessScheme::Index, _Containment,
+                 _Allocator, Space >;
+        template< int D >
+            using Container = Containment< OrientedCWCell< D >,
+                  Allocator< OrientedCWCell< D > > >;
+    
+
+        AbstractOrientedCWComplex()
+        {
+            ContainerFiller< _Dim, AbstractOrientedCWComplex >::fill(*this);
+        }
+        ~AbstractOrientedCWComplex()
+        {
+            //for(int i = 0; i < _Dim; i++) delete cell_containers[i];
+
+        }
+
+        inline void* foo(ptrdiff_t i)
+        {
+            return cell_containers[i];
+        }
+
+
+        template < int D >
+        inline AbstractOrientedCWComplexIterator < AbstractOrientedCWComplex >
+        insert( OrientedCWComplex< D > &s )
+        {
+
+            AbstractOrientedCWComplexIterator<AbstractOrientedCWComplex>
+                iter(this);
+            iter.insert(s);
+            return iter;
+
+        }
+
+        inline void* operator [] (const int i)
+        {
+            //Container< i > C;
+            return cell_containers[i];
+            //return *((Container< i > *) cell_containers[D]);
+            //return new F;
+        }
+
+        void* cell_containers[_Dim + 1];
+};
+
+template< int _Dim, LinkType _LType, AccessScheme _AScheme,
+    template< class U , class V > class _Containment,
+    template< class U > class _Allocator, class _Space>
+class AbstractOrientedCWComplexIterator<
+AbstractOrientedCWComplex< _Dim, _LType,
+    _AScheme, _Containment, _Allocator, _Space > >
+{
+    public:
+	    typedef AbstractOrientedCWComplex< _Dim, _LType,
+		    _AScheme, _Containment, _Allocator, _Space > ACWCT;
+	    typedef AbstractOrientedCWComplexTopologyTrait< ACWCT > ACWCTopoT;
+	    typedef AbstractOrientedCWComplexTopologicalOperations < ACWCT >
+		    ACWCTopoOp;
+	    typedef AbstractOrientedCWComplexIteratorFunctionTrait<
+		    AbstractOrientedCWComplexIterator > IterFuncT;
+	    template< int D >
+		    using OrientedCWCell = AbstractOrientedCWCell< D, LinkType::Single,
+			  AccessScheme::Index, _Containment,
+			  _Allocator, _Space >;
+	    template< int D >
+		    using Container = _Containment< OrientedCWCell< D >,
+			  _Allocator< OrientedCWCell < D > > >;
+
+
+	    AbstractOrientedCWComplexIterator(ACWCT* cwc)
+	    {
+		    m_sd = cwc;
+		    IterFiller< _Dim, AbstractOrientedCWComplexIterator,
+			    ACWCT >::fill(this);
+	    }
+	    AbstractOrientedCWComplexIterator()
+	    {
+		    IterFiller< _Dim, AbstractOrientedCWComplexIterator,
+			    ACWCT >::fill(this);
+	    }
+	    AbstractOrientedCWComplexIterator(const
+			    AbstractOrientedCWComplexIterator &iter)
+	    {
+		    for(int i = 0; i < _Dim + 1; i++)
+		    {
+			    iterdata[i] = iter.iterdata[i];
+			    cellsindices[i] = iter.cellsindices[i];
+			    m_sd = iter.m_sd;
+		    }
+
+	    }
+
+	    ~AbstractOrientedCWComplexIterator()
+	    {
+		    //for(int i = 0; i < _Dim; i++) delete iterdata[i];
+	    }
+
+	    inline bool isvalid()
+	    {
+		    return IterFuncT::isvalid(*this);
+	    }
+	    inline AbstractOrientedCWComplexIterator&
+		    make(OrientedCWCell< 0 > s[ _Dim + 1])
+		    {
+			    return ACWCTopoOp::template makeAbstractSimplex<
+				    AbstractOrientedCWComplexIterator, _Dim >
+				    ::doit(*this, s);
+		    }
+	    template < int D >
+		    inline AbstractOrientedCWComplexIterator&
+		    insert(OrientedCWCell< D > &s)
+		    {
+			    ACWCTopoT::template insert<D,
+				    AbstractOrientedCWComplexIterator >::doit(*this, s);
+			    return *this;
+		    }
+	    template < int _D >
+		    inline AbstractOrientedCWComplexIterator& simplexCCW()
+		    {
+			    ACWCTopoT::template simplexCCV<_D,
+				    AbstractOrientedCWComplexIterator >::doit(*this);
+			    return *this;
+		    }
+	    template < int D >
+		    inline Container< D > &
+		    getSimplices(OrientedCWCell< D > &hs)
+		    {
+			    return *(static_cast< Container< D > * >
+					    (m_sd->cell_containers[D]));
+
+		    }
+	    template < int D >
+		    inline OrientedCWCell< D > &
+		    get(OrientedCWCell< D > &hs)
+		    {
+
+			    return
+				    (*(static_cast< Container< D > * >
+				       (m_sd->cell_containers[D])))
+				    [cellsindices[ D ]];
+
+
+		    }
+	    inline ptrdiff_t getID(ptrdiff_t i)
+	    {
+		    return cellsindices[i];
+	    }
+
+	    inline ptrdiff_t& operator [] (ptrdiff_t i)
+	    {
+		    return cellsindices[i];
+	    }
+
+	    template < int D >
+		    inline OrientedCWCell < D > &
+		    makeOrientedCWCell()
+		    {
+		    }
+	    void*       iterdata[_Dim + 1];
+	    ptrdiff_t       cellsindices[_Dim + 1];
+	    ACWCT    *m_sd;
+};
+
+
+
 #endif
