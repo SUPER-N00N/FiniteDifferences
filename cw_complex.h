@@ -268,9 +268,9 @@ AbstractOrientedCWComplex< _Dim, _LType,
 			    return *this;
 		    }
 	    template < int _D >
-		    inline AbstractOrientedCWComplexIterator& simplexCCW()
+		    inline AbstractOrientedCWComplexIterator& cellCCW()
 		    {
-			    ACWCTopoT::template simplexCCV<_D,
+			    ACWCTopoT::template cellCCV<_D,
 				    AbstractOrientedCWComplexIterator >::doit(*this);
 			    return *this;
 		    }
@@ -314,6 +314,418 @@ AbstractOrientedCWComplex< _Dim, _LType,
 	    ACWCT    *m_sd;
 };
 
+template< int _Dim,
+    template< class U , class V > class _Containment,
+    template< class U > class _Allocator, class _Space>
+class AbstractOrientedCWComplexTopologyTrait<
+AbstractOrientedCWComplex< _Dim, LinkType::Single,
+    AccessScheme::Index, _Containment, _Allocator, _Space > >
+{
+    public:
 
+        typedef AbstractOrientedCWComplex< _Dim,
+                LinkType::Single, AccessScheme::Index, _Containment,
+                _Allocator, _Space > ACWCT;
+        typedef AbstractOrientedCWComplexIterator< ACWCT > IterT;
+
+        template< int D >
+          using OrientedCWCell = AbstractOrientedCWCell< D, LinkType::Single,
+                AccessScheme::Index, _Containment,
+                _Allocator, _Space >;
+
+        template< int D >
+        using Container = _Containment< OrientedCWCell< D >,
+              _Allocator< OrientedCWCell < D > > >;
+       template< int _D, class _It >
+            struct cellFlip
+            {
+                static inline bool doit(IterT &iter)
+                {
+                    bool succ;
+                    ptrdiff_t opponent, parent, upper, max_dim;
+
+                    opponent = iter.m_sd->cell_containers[_D]
+                        [iter.cellsindices[_D]].opponent;
+                    if(opponent == -1) return false;
+
+                    iter.cellsindices[_D] = opponent;
+
+                    upper = iter.m_sd->cell_containers[_D]
+                        [iter.cellsindices[_D]].upper;
+
+                    for(int i = 0; i < _Dim - _D; i++)
+                    {
+                        iter.cellsindices[_D + i + 1] =
+                            iter.m_sd->cell_containers[_D + i]
+                            [iter.cellsindices[_D + i]].upper;
+
+                    }
+
+                    ptrdiff_t n[_D];
+                    simd_cp< int, _D >::eval(n,
+                            iter.m_sh->cell_containers[_D]
+                            [iter.cellsindices[_D - 1]].vertices);
+
+                    //... searching for odd permutation of vertices in the
+                    //(_D ) (_D - 1) cells
+                    // it's enough to search for any permutation of the
+                    // vertices, since two half cells
+                    // sharing the same vertices are the maximum - only two
+                    // orientations (even and odd permutation)
+                    // but the algebraic structure so the simple product
+                    // addition is non-ambiguous
+                    // (need a proof based on the eilenberg-zilber theorem and
+                    // the kuenneth theorem)
+                    //
+       template< int _D, class _It >
+            struct insert
+            {
+                static inline bool doit(IterT &iter,
+                        typename ACWCT::template OrientedCWCell< _D > s)
+                {
+                    (static_cast< Container< _D > * >(
+                                                      iter.m_sd
+                                                      ->
+                                                      cell_containers[_D]
+                                                     ))
+                        ->push_back(s);
+                    iter.cellsindices[ _D ] =
+                        (static_cast< Container< _D > * >(
+                                                          iter.m_sd
+                                                          ->
+                                                          cell_containers[_D]
+                                                         ))
+                        ->size() - 1;
+
+
+                    return true;
+
+                }
+            };
+
+        template< int _D, class _It >
+            struct align
+            {
+                static inline bool doit(IterT &iter)
+                {
+                    bool succ;
+                    int inv = simd_sum< int,
+                        _D >::eval(iter.m_sh->cell_containers[_D - 1]
+                                [iter.cellsindices[_D - 1]].vertices);
+                    IterT start, run;
+                    start = iter;
+                    iter.cellsindices[ _D - 1] =
+                        iter.m_sd->cell_containers[_D]
+                        [iter.cellsindices[_D]].lower[_D - 1];
+
+                    do{
+
+                        cellCCW< _D - 1, _It >::doit(iter);
+
+                    }while( simd_sum< int, _D >::eval(
+                                run.spimplicesindices[_D - 1].vertices) != inv);
+                    cellAlign< _D - 1, _It >::doit(iter);
+                    return succ;
+
+                }
+            };
+
+        template< class _It >
+            struct insert< 0, _It >
+            {
+                static inline bool doit(IterT &iter,
+                        typename ACWCT::template OrientedCWCell< 0 > s)
+                {
+                    (static_cast< Container< 0 > * >(
+                                                      iter.m_sd
+                                                      ->
+                                                      cell_containers[0]
+                                                      ))
+                        ->push_back(s);
+
+                    iter.cellsindices[ 0 ] =
+                        (static_cast< Container< 0 > * >(
+                                                          iter.m_sd
+                                                          ->
+                                                          cell_containers[0]
+                                                         ))
+                        ->size() - 1;
+
+
+                    return true;
+
+                }
+
+            };
+        template< class _It >
+            struct cellAlign< 0, _It >
+            {
+                static inline bool doit(IterT &iter)
+                {
+                    return true;
+                }
+            };
+
+        template< int _D, class _It >
+            struct cellCCW
+            {
+                static inline bool doit(IterT &iter)
+                {
+                    bool succ;
+                    cellFlip< _D - 2, _It >::doit(iter);
+                    cellCCW< _D - 1, _It >::doit(iter);
+                    return succ;
+                }
+            };
+
+        template <class _It>
+            struct cellFlip< 1, _It>
+            {
+                static inline bool doit(IterT &iter)
+                {
+                    ptrdiff_t oppo, high;
+
+                    return false;
+                }
+
+            };
+
+        template <class _It>
+            struct cellCCW< 1, _It>
+            {
+                inline bool doit(IterT &iter)
+                {
+                    return false;
+                }
+
+            };
+
+        template <class _It>
+            struct cellFlip< 0, _It>
+            {
+                inline bool doit(IterT &iter)
+                {
+                    return false;
+                }
+            };
+
+        template <class _It>
+            struct cellCCW< 0, _It>
+            {
+                inline bool doit(IterT &iter)
+                {
+                    return false;
+                }
+
+            };
+
+		};
+
+};
+
+template< int _Dim,
+    template< class U , class V > class _Containment,
+    template< class U > class _Allocator, class _Space >
+    struct      AbstractOrientedCWComplexTopologicalOperations<
+    AbstractOrientedCWComplex< _Dim, LinkType::Single,
+    AccessScheme::Index, _Containment, _Allocator, _Space > >
+{
+    public:
+
+        typedef AbstractOrientedCWComplex< _Dim,
+                LinkType::Single, AccessScheme::Index, _Containment,
+                _Allocator, _Space > ASCT;
+        typedef AbstractOrientedCWComplexIterator< ASCT > Iter;
+
+        template< int D >
+            using OrientedCWCell = AbstractOrientedCWCell< D, LinkType::Single,
+                  AccessScheme::Index, _Containment,
+                  _Allocator, _Space >;
+
+        template< int D >
+            using Container = _Containment< OrientedCWCell< D >,
+                  _Allocator< OrientedCWCell < D > > >;
+//assuming that the OrientedCWCell<0> are already inserted and part
+//of the cw complex referenced by the iterator
+        template< int D, class _It >
+            struct appendAbstractSimplex
+            {
+                static inline _It& doit(_It &iter, OrientedCWCell< 0 > s[_It::d])
+                {
+                    bool succ = true;
+                    return succ;
+                }
+            };
+        template< class _It >
+            struct appendAbstractSimplex< 0, _It >
+            {
+                static inline _It doit(_It &iter, OrientedCWCell< 0 > s[1])
+                {
+                    return true;
+                }
+            };
+        template< class _It, int D >
+            struct setOpponent
+            {
+                static inline void doit(_It iterators[D])
+                {
+                    OrientedCWCell< D - 2 > append;
+
+                    for(int i = 0; i < (D + 1); i++)
+                    {
+                        iterators[i].get(append).opponent =
+                            iterators[(i + 1) % (D + 1)][D - 2];
+                        iterators[(i + 1) % (D + 1)].get(append). opponent =
+                            iterators[i][D - 2];
+                    }
+                }
+            };
+	template< class _It >
+		struct setOpponent< _It, 0 >
+		{
+			static inline void doit(_It* iterators)
+			{
+
+			}
+		};
+
+        template< class _It >
+            struct setOpponent< _It, 1 >
+            {
+                static inline void doit(_It* iterators)
+                {
+
+                }
+            };
+    
+        template< class _It, int D >
+            struct setNext
+            {
+                static inline void doit(_It iterators[D + 1])
+                {
+                    OrientedCWCell< D - 1 > append;
+
+                    for(int i = 0; i < (D + 1); i++)
+                    {
+                        iterators[i].get(append).next =
+                            iterators[(i + 1) % (D + 1)][D - 1];
+                    }
+                }
+            };
+        template< class _It >
+            struct setNext< _It, 0 >
+            {
+                static inline void doit(_It* iterators)
+                {
+
+                } 
+            };
+        template< class _It, int D >
+            struct setUpperLower
+            {
+                static inline void doit(_It iterators[D + 1])
+                {
+                    OrientedCWCell< D > upper;
+                    OrientedCWCell< D - 1 > lower;
+
+
+
+                    for(int i = 0; i < (D); i++)
+                    {
+                        Container< D > *cp = static_cast< Container< D > *>(
+                                iterators[i].m_sd->cell_containers[D]);
+                        iterators[i].get(upper).lower =
+                            iterators[i][D - 1];
+
+                        iterators[i].get(lower).upper =
+                            iterators[i][D];
+
+                    }
+                }
+            };
+       template< class _It >
+            struct setUpperLower< _It, -1 >
+            {
+                static inline void doit(_It iterators[0])
+                {
+                }
+            };
+
+
+        template< class _It , int D >
+            struct makeAbstractSimplex
+            {
+		    static inline Iter& doit(Iter &it, OrientedCWCell< 0 > s[D + 1])
+		    {
+			    //directed complete partial order
+			    bool succ = true;
+			    OrientedCWCell< D > hs;
+			    it.insert(hs);
+			    //it.make(s);
+			    Iter iterators[D + 1];
+			    for(int i = 0; i < (D + 1); i++) iterators[i] = it;
+			    OrientedCWCell< 0 > sub[D];
+			    for(int i = 0; i < (D + 1); i++)
+			    {
+				    for(int j = 0; j < D; j++)
+				    {
+					    sub[j] = s[(j + i) % D];
+				    }
+				    if(i & 1)std::swap(sub[0], sub[D - 1]);//loop separation
+				    //it.make(
+				    iterators[i] = makeAbstractSimplex< _It, D - 1 >
+					    ::doit(it, sub); //iterator now contains handles
+			    }
+			    setOpponent< _It, D >::doit(iterators);
+			    setNext< _It, D >::doit(iterators);
+			    setUpperLower< _It, D >::doit(iterators);
+			    return it;
+		    }
+            };
+       template< class _It >
+            struct makeAbstractSimplex< _It, 0 >
+            {
+                static inline _It doit(_It &it, OrientedCWCell< 0 > s[1])
+                {
+                    OrientedCWCell< 0 > hs;
+                    it.insert(hs);
+                    return it;
+                }
+            };
+       template< class It, int D >
+           struct getHamiltonianPath
+           {
+               static inline Iter& doit(It &it, std::unique_ptr< OrientedCWCell< D > > circle)
+               {
+                   return it;
+
+               }
+
+           };
+       template< class It >
+           struct getHamiltonPathVertices
+           {
+               static inline Iter& doit(It &it, std::unique_ptr< OrientedCWCell< 0 > > circle)
+               {
+                   return it;
+               }
+           };
+
+};
+
+
+#include <vector>
+#include <map>
+
+//specialise the cells for proper spaces
+template< int D > using OrientedCWCell = AbstractOrientedCWCell< D, LinkType::Single,
+    AccessScheme::Index, std::vector, std::allocator, TopologicalSpace< D + 1 > >;
+template< int D > using OrientedCWComplex = AbstractOrientedCWComplex< D,
+    LinkType::Single, AccessScheme::Index, std::vector, std::allocator,
+    TopologicalSpace< D + 1 > >;
+template< int D > using OrientedCWComplexTopologyTrait =
+AbstractOrientedCWComplexTopologyTrait < OrientedCWComplex< D + 1 > >;
+template< int D > using OrientedCWComplexIterator = AbstractOrientedCWComplexIterator< OrientedCWComplex< D > >;
 
 #endif
+
