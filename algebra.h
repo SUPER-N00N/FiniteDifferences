@@ -20,6 +20,12 @@ struct Set { enum { d = _Dim }; };
 template< int _Dim >
 struct TopologicalSpace: Set< _Dim > {};
 template< int _Dim >
+struct AlexandrovTopology: Set< _Dim > {}; //Pavel Alexandrov
+template< class S>
+struct AlexandrovSpace: S {}; //Aleksandr Danilovich Aleksandrov
+template< int k, class S >
+struct CAT: S {}; //CAT(k) - k should be float :(
+template< int _Dim >
 struct UniformSpace: TopologicalSpace< _Dim > {};
 template< int _Dim, template < int __D > class _M  >
 struct MetricSpace: UniformSpace < _Dim > {};

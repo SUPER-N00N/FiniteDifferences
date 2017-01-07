@@ -5,6 +5,8 @@
 #define CW_COMPLEX_H
 
 #include "algebra.h"
+//need to define alexandrov topology (discrete space)
+//duality?
 
 template< int _Dim, LinkType _LType, AccessScheme _AScheme,
     template< class U , class V > class Containment , template< class U >
@@ -683,7 +685,7 @@ template< int _Dim,
 		    }
             };
        template< class _It >
-            struct makeAbstractSimplex< _It, 0 >
+            struct makeAbstractCWCell< _It, 0 >
             {
                 static inline _It doit(_It &it, OrientedCWCell< 0 > s[1])
                 {
