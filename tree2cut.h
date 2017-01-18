@@ -4,7 +4,6 @@
 //just a few naive sketches 
 #ifndef SPACES_H
 #define SPACES_H
-#include "cw_complex.h"
 #include "simplicial_complex.h"
 //simple implementation of a point
 //kinda n-vector stuff if used in a vector-space

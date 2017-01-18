@@ -34,6 +34,6 @@ template< int64_t N > class QuotientRing {};
 //struct Euclidian: Metric < _Dim,  > {};
 
 
-template< int k, class S >
-struct CAT: S {}; //CAT(k) - k should be float :(
+template< int k, int D, class M >
+struct CAT: MetricSpace< D, M > {}; //CAT(k) - k should be float :(
 #endif
