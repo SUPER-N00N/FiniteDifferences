@@ -107,8 +107,8 @@ template< int D, class _CWC > struct ContainerFiller
     static inline void fill(_CWC& c)
     {   
         c.cell_containers[D] = new typename _CWC::template Containment<
-            typename _CWC::template CWCell< D >, typename _CWC::template Allocator<
-            typename _CWC::template CWCell< D > > >;
+            typename _CWC::template OrientedCWCell< D >, typename _CWC::template Allocator<
+            typename _CWC::template OrientedCWCell< D > > >;
         ContainerFiller< D - 1, _CWC >::fill(c);
     };
 };
@@ -236,13 +236,14 @@ AbstractOrientedCWComplex< _Dim, _LType,
 	    AbstractOrientedCWComplexIterator(const
 			    AbstractOrientedCWComplexIterator &iter)
 	    {
+		/*
 		    for(int i = 0; i < _Dim + 1; i++)
 		    {
 			    iterdata[i] = iter.iterdata[i];
 			    cellsindices[i] = iter.cellsindices[i];
 			    m_sd = iter.m_sd;
 		    }
-
+		*/
 	    }
 
 	    ~AbstractOrientedCWComplexIterator()

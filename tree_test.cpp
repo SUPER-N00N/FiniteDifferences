@@ -21,7 +21,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include "spaces.h"
-
+#include "cubical_complex.h"
 
 int main(int argc, char* argv[])
 {
@@ -34,6 +34,7 @@ int main(int argc, char* argv[])
         }
         boost::asio::io_service io_service;
 
+	MortonHalfCubeComplex< 4, EuclidianSpaceCompressedFuint64 > l_cubecomplex;
 
         boost::asio::signal_set signal_set(io_service);
         signal_set.add(SIGINT);
