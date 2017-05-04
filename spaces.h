@@ -1025,9 +1025,10 @@ template< int D, int M,
 
 
 
-template < int D, template< int _D > class M >
+template <int Q,  int D, template< int _D > class M >
 struct MortonSpace: public TopologicalSpace< D >
 {
+    
     MortonSpace()
     {
     }
@@ -1037,18 +1038,35 @@ struct MortonSpace: public TopologicalSpace< D >
     }
 };
 
-template < template< int D > class M >
-struct MortonSpace< 1, M >: public TopologicalSpace< 1 >
+template < int Q, template< int D > class M >
+struct MortonSpace< 1, Q, M >: public TopologicalSpace< 1 >
 {
-    typename M< 4 >::KeyType v;
+    
+    typedef typename M< Q >::KeyType KeyType;
+    typedef typename M< Q >::Point PointT;
 
+    
+    typename M< Q >::KeyType v;
+    KeyType up, op, ne, lo; //upper, opponent, next, lower
+//	template < int D >
+//	typedef M<D>::typename KeyType KT;
+//	KT v;	
     MortonSpace()
     {
         v = 0;
+	up = op = ne = lo = -1;
+    }
+    MortonSpace(PointT &p)
+    {
+	v = M< Q >::morton_encode(p);
     }
     MortonSpace(const MortonSpace &s)
     {
         v = s.v;
+	up = s.up;
+	op = s.op;
+	ne = s.ne;
+	lo = s.lo;
     }
 };
 
@@ -1063,10 +1081,10 @@ AbstractHalfSimplicialComplex< D, LinkType::Single, AccessScheme::Index,
 */
 template< int D, template< int _D > class M > using MortonHalfSimplex =
 AbstractHalfSimplex< D, LinkType::Single, AccessScheme::Index,
-    std::vector, std::allocator, MortonSpace< 1, M > >;
+    std::vector, std::allocator, MortonSpace< D, 1, M > >;
 template< int D, template< int _D > class M > using MortonHalfSimplicialComplex =
 AbstractHalfSimplicialComplex< D, LinkType::Single, AccessScheme::Index,
-    std::vector, std::allocator, MortonSpace< 1, M > >;
+    std::vector, std::allocator, MortonSpace< D, 1, M > >;
 template< int D, template< int _D > class M > using
 MortonHalfSimplicialComplexTopologyTrait = AbstractHalfSimplicialComplexTopologyTrait<
 MortonHalfSimplicialComplex< D, M > >;

@@ -32,6 +32,7 @@ template< int _Dim,  template< class U, class V > class _Containment,
     _Containment, _Allocator, _Space >: _Space
 {
     enum {d = _Dim};
+    typedef _Space Space;
     ptrdiff_t upper, opponent,
               next;
     //ptrdiff_t lower[_Dim + 1]; 

@@ -26,7 +26,7 @@ using EuclidianSpaceCompressedFuint32 = MetricSpaceCompressed< D,
 template< int D >
 using EuclidianSpaceCompressedFuint64 = MetricSpaceCompressed< D,
       SimpleEuklidianMetricFuint64 >;
-
+/*
 template< int D, template< int _D > class M > using MortonHalfCube =
 AbstractOrientedCWCell< D, LinkType::Single, AccessScheme::Index,
     std::vector, std::allocator, MortonSpace< 1, M > >;
@@ -42,20 +42,57 @@ MortonHalfCubeComplex< D, M > >;
 template< int D, template< int _D > class M  > using
 MortonHalfCubeComplexIterator = AbstractOrientedCWComplexIterator<
 MortonHalfCubeComplex< D, M > >;
+*/
+
+
+template< int D, template< int _D > class M > using MortonHalfCube =
+AbstractOrientedCWCell< D, LinkType::Single, AccessScheme::Index,
+    std::vector, std::allocator, MortonSpace< D, 1, M > >;
+template< int D, template< int _D > class M > using MortonHalfCubeComplex =
+AbstractOrientedCWComplex< D, LinkType::Single, AccessScheme::Index,
+    std::vector, std::allocator, MortonSpace< D, 1, M > >;
+template< int D, template< int _D > class M > using
+MortonHalfCubeComplexTopologyTrait = AbstractOrientedCWComplexTopologyTrait<
+MortonHalfCubeComplex< D, M > >;
+template< int D, template< int _D > class M > using
+MortonHalfCubeComplexTopologicalOperations = AbstractOrientedCWComplexTopologicalOperations<
+MortonHalfCubeComplex< D, M > >;
+template< int D, template< int _D > class M  > using
+MortonHalfCubeComplexIterator = AbstractOrientedCWComplexIterator<
+MortonHalfCubeComplex< D, M > >;
 
 template< int D, template< int _D > class M > 
 class AbstractOrientedCWComplexTopologyTrait<MortonHalfCubeComplex< D, M > >
 {
 	public:
 
+			
 		typedef MortonHalfCubeComplex< D, M > ACWCC;
 		typedef AbstractOrientedCWComplexIterator< ACWCC > Iter;
 		template< int D__ >
 			using HalfCube = typename ACWCC::template OrientedCWCell< D >;
-		typename ACWCC::Space Space;
+		typedef typename ACWCC::Space Space;
 		typename ACWCC::Allocator Allocator;
-		typename ACWCC::Container Container;
+//		typedef typename ACWCC::Container Container;
+		template< int _D >
+			using Container = typename ACWCC::template Container< _D >;
+		
 
+		typedef typename Space::ValueType ValueType;
+		typedef typename Space::KeyType KeyType;
+		enum {  d = D,
+			numofsubkeys = (sizeof(ValueType) * 8),
+			numoflevels = (sizeof(KeyType) * 8 / D),
+			numofchilds = ipow<2, d >::eval,
+			numofneighbours = ipow<3, D>::eval - 1,
+		};
+
+		inline void
+		getNeighbourhood(int r, Iter &iter)
+		{
+			//generate r-neighbourhood -- see surroundings
+			return;
+		}
 		template< int _D, class _It >
 			struct cellFlip
 			{
@@ -72,8 +109,26 @@ class AbstractOrientedCWComplexTopologyTrait<MortonHalfCubeComplex< D, M > >
 		template< int _D, class _It >
 			struct insert
 			{
-				static inline bool doit(Iter &iter, typename ACWCC::template OrientedCWCell< _D > c)
+				static inline bool doit(Iter &iter, typename ACWCC::template OrientedCWCell< _D > &c)
 				{
+					
+					//c.v = 0;						
+					typename Space::PointT p;								            	
+					(static_cast< Container< _D > * >(
+									  iter.m_sd
+									  ->
+									  cell_containers[_D]
+									 ))
+						->push_back(c);
+					iter.cellsindices[ _D ] =
+						(static_cast< Container< _D > * >(
+										  iter.m_sd
+										  ->
+										  cell_containers[_D]
+										 ))
+						->size() - 1;
+
+
 					return false;
 				}
 			};
@@ -123,7 +178,16 @@ struct CubicalSpaceCompressed: public CAT< 0, D, _M>
 	template < int _D > 
 	using Container = typename MHCC::template Container< _D >;
 
+	
+	//std::map< KeyType, std::tuple< int, std::tuple< HalfCube<0>, HalfCube<1>, HalfCube<2>, HalfCube<3>> > > l_map; 
+	std::map< KeyType, std::vector< std::vector< typename HalfCube< D >::Space > > > q_map; 
+	MHCC m_mhcc;
 
+	template < int __D >
+	void insert(HalfCube< D > &hc)
+	{
+					
+	}	
 
 };
 //template<int D, class M>

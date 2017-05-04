@@ -23,6 +23,8 @@
 #include "spaces.h"
 #include "cubical_complex.h"
 
+typedef CubicalSpaceCompressed< 4, SimpleEuklidianMetricFuint64 > Space4;
+
 int main(int argc, char* argv[])
 {
     try
@@ -34,7 +36,9 @@ int main(int argc, char* argv[])
         }
         boost::asio::io_service io_service;
 
-	MortonHalfCubeComplex< 4, EuclidianSpaceCompressedFuint64 > l_cubecomplex;
+	Space4 l_space;
+	Space4::PointT l_p;
+	//MortonHalfCubeComplex< 4, EuclidianSpaceCompressedFuint64 >::Space::PointT p;
 
         boost::asio::signal_set signal_set(io_service);
         signal_set.add(SIGINT);
@@ -42,7 +46,7 @@ int main(int argc, char* argv[])
         signal_set.add(SIGQUIT);
         signal_set.async_wait(boost::bind(&boost::asio::io_service::stop, &io_service));
 
-        io_service.run();
+      //  io_service.run();
     }
     catch (std::exception& e)
     {
